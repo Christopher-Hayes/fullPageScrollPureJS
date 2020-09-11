@@ -27,12 +27,10 @@
 		var defaults = {
 			container : main,
 			sections : sections || main.querySelectorAll('section'),
-			animateTime : params.animateTime || 0.7,
+			animateTime : params.animateTime || 700,
 			animateFunction : params.animateFunction || 'ease',
 			maxPosition: sections.length - 1,
 			currentPosition: 0,
-			displayDots: typeof params.displayDots != 'undefined' ? params.displayDots : true,
-			dotsPosition: params.dotsPosition || 'left'
 		};
 
 		this.defaults = defaults;
@@ -48,7 +46,6 @@
 	fullScroll.prototype.init = function () {
 		this.buildPublicFunctions()
         .buildSections()
-        .buildDots()
         .addEvents();
 
 		var anchor = location.hash.replace('#', '').split('/')[0];
@@ -66,37 +63,6 @@
 		for (var i = 0; i < sections.length; i++) {
 			sections[i].setAttribute('data-index', i);
 		}
-		return this;
-	};
-
-	/**
-	 * Build dots navigation
-	 * @return {Object} this (fullScroll)
-	 */
-	fullScroll.prototype.buildDots = function () {		
-		this.ul = document.createElement('ul');
-		
-		this.ul.className = this.updateClass(1, 'dots', this.ul.className);
-		this.ul.className = this.updateClass(1, this.defaults.dotsPosition == 'right' ? 'dots-right' : 'dots-left', this.ul.className);
-
-		var _self = this;
-		var sections = this.defaults.sections;		
-
-		for (var i = 0; i < sections.length; i++) {
-			var li = document.createElement('li');
-			var a = document.createElement('a');
-		
-			a.setAttribute('href', '#' + i);			
-			li.appendChild(a);
-			_self.ul.appendChild(li);
-		}
-
-		this.ul.childNodes[0].firstChild.className = this.updateClass(1, 'active', this.ul.childNodes[0].firstChild.className);
-
-		if (this.defaults.displayDots) {
-			document.body.appendChild(this.ul);
-		}
-
 		return this;
 	};
 
@@ -187,12 +153,11 @@
 
 		this.removeEvents = function () {
 			if (document.addEventListener) {
-			document.removeEventListener('mousewheel', this.mouseWheelAndKey, false);
-			document.removeEventListener('wheel', this.mouseWheelAndKey, false);
-			document.removeEventListener('keyup', this.mouseWheelAndKey, false);
-			document.removeEventListener('touchstart', this.touchStart, false);
-			document.removeEventListener('touchend', this.touchEnd, false);
-
+        document.removeEventListener('mousewheel', this.mouseWheelAndKey, false);
+        document.removeEventListener('wheel', this.mouseWheelAndKey, false);
+        document.removeEventListener('keyup', this.mouseWheelAndKey, false);
+        document.removeEventListener('touchstart', this.touchStart, false);
+        document.removeEventListener('touchend', this.touchEnd, false);
 			} else {
 				document.detachEvent('onmousewheel', this.mouseWheelAndKey, false);
 				document.detachEvent('onkeyup', this.mouseWheelAndKey, false);
@@ -204,47 +169,58 @@
 		};
 
 		this.animateScroll = function () {
-			var animateTime = this.defaults.animateTime;
-			var animateFunction = this.defaults.animateFunction;
 			var position = this.defaults.currentPosition * 100;
 
+      let startScrollY = getScrollTop();
+      setTransition();
+      setTranslate(position);
+
+
+      setTimeout(() => {
+        // Remove transition
+        setTransition(0, animateFunction);
+        // Wait a moment for the transition CSS to take effect
+        setTimeout(() => {
+          // Swap translate for scroll position
+          setTranslate(0);
+          let deltaScrollY = getScrollTop() - startScrollY;
+          window.scrollTo(window.scrollY || 0, position + deltaScrollY);
+        }, 50);
+
+      }, animateTime);
+		};
+
+    this.setTranslate = position => {
 			this.defaults.container.style.webkitTransform = 'translateY(-' + position + '%)';
 			this.defaults.container.style.mozTransform = 'translateY(-' + position + '%)';
 			this.defaults.container.style.msTransform = 'translateY(-' + position + '%)';
 			this.defaults.container.style.transform = 'translateY(-' + position + '%)';
-			this.defaults.container.style.webkitTransition = 'all ' + animateTime + 's ' + animateFunction;
-			this.defaults.container.style.mozTransition = 'all ' + animateTime + 's ' + animateFunction;
-			this.defaults.container.style.msTransition = 'all ' + animateTime + 's ' + animateFunction;
-			this.defaults.container.style.transition = 'all ' + animateTime + 's ' + animateFunction;
-
-			for (var i = 0; i < this.ul.childNodes.length; i++) {
-					this.ul.childNodes[i].firstChild.className = this.updateClass(2, 'active', this.ul.childNodes[i].firstChild.className);
-					if (i == this.defaults.currentPosition) {
-					this.ul.childNodes[i].firstChild.className = this.updateClass(1, 'active', this.ul.childNodes[i].firstChild.className);
-				}
-			}
-		};
+    };
+    this.setTransition = (animateTime=this.defaults.animateTime,
+                          animateFunction=this.defaults.animateFunction) => {
+			this.defaults.container.style.webkitTransition = 'all ' + animateTime + 'ms ' + animateFunction;
+			this.defaults.container.style.mozTransition = 'all ' + animateTime + 'ms ' + animateFunction;
+			this.defaults.container.style.msTransition = 'all ' + animateTime + 'ms ' + animateFunction;
+			this.defaults.container.style.transition = 'all ' + animateTime + 'ms ' + animateFunction;
+    };
 
 		this.changeCurrentPosition = function (position) {
-			if (position !== "") {
+			if (position !== '') {
 				_self.defaults.currentPosition = position;
-				location.hash = _self.defaults.currentPosition;
-			}
-		};
-
-		this.registerIeTags = function () {
-			document.createElement('section'); 
-		};
-
-		this.updateClass = function (type, newClass, currentClass) {
-			if (type == 1) {
-				return currentClass += ' ' + newClass;
-			} else if (type == 2) {
-				return currentClass.replace(newClass, '');
+				// location.hash = _self.defaults.currentPosition;
 			}
 		};
 
 		return this;
 	};
 	window.fullScroll = fullScroll;
+
+  // Utility functions
+  // Get scroll position; source: https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollY
+  function getScrollTop() {
+    var supportPageOffset = window.pageYOffset !== undefined;
+    var isCSS1Compat = ((document.compatMode || "") === "CSS1Compat");
+    var y = supportPageOffset ? window.pageYOffset : isCSS1Compat ? document.documentElement.scrollTop : docume
+    return y;
+  }
 })();
