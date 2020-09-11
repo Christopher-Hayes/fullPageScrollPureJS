@@ -12,13 +12,13 @@
 		 * Main div
 		 * @type {Object}
 		 */
-		var main = document.getElementById(params.mainElement);
+		var main = document.querySelector(params.mainSelector);
 		
 		/**
 		 * Sections divclass
 		 * @type {Array}
 		 */
-		var sections = main.getElementsByTagName('section');
+		var sections = main.querySelectorAll(params.sectionSelector);
 		
 		/**
 		 * Full page scroll configurations
@@ -26,7 +26,7 @@
 		 */
 		var defaults = {
 			container : main,
-			sections : sections,
+			sections : sections || main.querySelectorAll('section'),
 			animateTime : params.animateTime || 0.7,
 			animateFunction : params.animateFunction || 'ease',
 			maxPosition: sections.length - 1,
@@ -47,9 +47,9 @@
 	 */
 	fullScroll.prototype.init = function () {
 		this.buildPublicFunctions()
-			.buildSections()
-			.buildDots()
-			.addEvents();
+        .buildSections()
+        .buildDots()
+        .addEvents();
 
 		var anchor = location.hash.replace('#', '').split('/')[0];
 		location.hash = 0;
@@ -115,7 +115,7 @@
 			window.addEventListener("hashchange", this.hashChange, false);
 
 			/**
-			 * Enable scroll if decive don't have touch support
+			 * Enable scroll if device doesn't have touch support
 			 */
 			if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
 				if(!('ontouchstart' in window)){
